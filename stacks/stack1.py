@@ -5,7 +5,6 @@ from aws_cdk import (
     aws_ecs as ecs,
     aws_ec2 as ec2,
     aws_route53 as route53,
-    aws-rds as rds,
     aws_ecs_patterns as ecs_patterns,
     aws_certificatemanager as certificatemanager,
     CfnOutput,
@@ -16,7 +15,7 @@ IMAGE_NAME = 'docker.io/nginx:latest'
 ZONE_NAME = 'agusavior.tk'
 DOMAIN_NAME = 'lb.agusavior.tk'
 
-class CdkPrototypeStack(Stack):
+class Stack1(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
