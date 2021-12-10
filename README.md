@@ -52,7 +52,7 @@ At this point you can now synthesize the CloudFormation template for this code.
 cdk synth
 ```
 
-## Useful commands
+## Useful commands of CDK
 
  * `cdk ls`          list all stacks in the app
  * `cdk synth`       emits the synthesized CloudFormation template
@@ -60,15 +60,28 @@ cdk synth
  * `cdk diff`        compare deployed stack with current state
  * `cdk docs`        open CDK documentation
 
-Enjoy!
+## Troubleshooting
 
-## About your domain
+### Can't deploy because certificate isn't created
 
-Do not forget to set up the namespaces correctly once the AWS Zone Name is created.
-Go to your route53, open the zone, and copy the four namespaces.Then, go to your domain provider and paste the namespaces in the configuration of the domain.
+This could be because you have to configure the namespaces of your domain.
+Follow the next steps:
+1. Run `cdk deploy`.
+2. Wait until your CDK creates the Hosted Zone.
+3. Log in in AWS Console and go to your hosted zones.
+4. Go to the hosted zone that CDK created.
+5. You'll see four namespaces in the column `Value/Route traffic to`.
+6. Copy each one and go to your domain provider, (for instance domain.com).
+7. Select your domain y go to its configuration.
+8. Find some "namespaces" list.
+9. Paste the copied namespaces that you copied in the step 5.
+10. Save it.
+11. Wait until the command `cdk deploy` finishes.
 
-<TO-DO> Move the above comment to another place.
+### Can't delete the stack with cdk destroy
 
+Maybe this is because you have to delete your Hosted Zone manually. 
+This seems to be an issue: https://github.com/aws/aws-cdk/issues/4155
 ## Miscellaneous
 
 If you don't want to install AWS CDK globally, you can using it with "npx" like so
@@ -77,3 +90,5 @@ npx aws-cdk <subcommand>
 ```
 
 In order to create this project, AWS CDK version 2.1.0 has been used.
+
+If you deploy this, you'll see an AWS Cloudformation Stack called CDKToolkit listed. Don't worry about it, CDK created that for its purpose.
