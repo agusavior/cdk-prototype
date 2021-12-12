@@ -3,8 +3,15 @@ import os
 
 import aws_cdk as cdk
 
-from stacks.stack1 import Stack1
+from applications.fargate import Stack1
+from applications.eb import Stack2
 
+CDK_DEFAULT_ACCOUNT = os.environ.get("CDK_DEFAULT_ACCOUNT")
+CDK_DEFAULT_REGION = os.environ.get("CDK_DEFAULT_REGION")
+
+# ==========
+# CDK APP (INFRASTRUCTURE OF EACH APP)
+# ==========
 
 app = cdk.App()
 Stack1(app, 'Stack1',
@@ -24,5 +31,8 @@ Stack1(app, 'Stack1',
 
     # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
     )
+
+# Beanstalk stack
+Stack2(app, 'Stack2')
 
 app.synth()

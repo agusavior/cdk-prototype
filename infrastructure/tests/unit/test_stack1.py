@@ -1,7 +1,9 @@
 import aws_cdk as core
 import aws_cdk.assertions as assertions
 
-from stacks.stack1 import Stack1
+from infrastructure.applications.fargate import Stack1
+
+# TODO: Fix comments
 
 # example tests. To run these tests, uncomment this file along with the example
 # resource in stacks/stack1.py

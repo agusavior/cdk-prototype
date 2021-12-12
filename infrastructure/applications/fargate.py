@@ -62,6 +62,9 @@ class Stack1(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
+        # TODO: Uncomment this!!
+        return
+
         # The code that defines your stack goes here
 
         # queue = sqs.Queue(
@@ -79,8 +82,6 @@ class Stack1(Stack):
         hosted_zone = route53.HostedZone(self, 'MyHostedZone', zone_name=DOMAIN_OF_HOSTED_ZONE)
         
         # route53.HostedZone.from_hosted_zone_id()
-
-        # elasticbeanstalk.CfnApplication()
 
         # TODO: Use constants in this scope
 

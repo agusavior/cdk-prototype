@@ -1,18 +1,34 @@
-# Welcome to CDK Prototype
+# Welcome to CDK-Prototype-Infrastructure
 
+Treat this folder as a sub project itself. This is the project that can deploy the other projects in the repository in an automated way using AWS CDK.
 ## Getting started
 
-First, you need to install AWS CLI. Then, use this command to set up the credentials of you AWS account.
+Treat this folder as a sub project itself, so, open it.
 ```bash
-aws configure
+cd infrastructure
 ```
+### Global dependencies
 
-Install AWS CDK
+You need:
+* AWS CLI
+* Python3
+* AWS CDK
+
+Install AWS CDK with
 ```bash
 sudo npm install -g aws-cdk
 ```
 
+### Configuration
+
+You need to install AWS CLI. Then, use this command to set up the credentials of you AWS account.
+```bash
+aws configure
+```
+
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
+
+### Local dependencies
 
 This project is set up like a standard Python project. The initialization
 process also creates a virtualenv within this project, stored under the `.venv`
@@ -52,13 +68,26 @@ At this point you can now synthesize the CloudFormation template for this code.
 cdk synth
 ```
 
-## Useful commands of CDK
+### Deploy
 
- * `cdk ls`          list all stacks in the app
- * `cdk synth`       emits the synthesized CloudFormation template
- * `cdk deploy`      deploy this stack to your default AWS account/region
- * `cdk diff`        compare deployed stack with current state
- * `cdk docs`        open CDK documentation
+Pre deploy script
+```bash
+python3 build.py
+```
+
+Deploy
+```bash
+cdk deploy
+```
+
+### Delete CloudFormation Stacks
+
+```bash
+cdk destroy --all
+```
+
+Some information won't be deleted in this process.
+Read more about it in this issue: https://github.com/aws/aws-cdk/issues/7194
 
 ## Troubleshooting
 
@@ -82,6 +111,11 @@ Follow the next steps:
 
 Maybe this is because you have to delete your Hosted Zone manually. 
 This seems to be an issue: https://github.com/aws/aws-cdk/issues/4155
+
+### Some assets aren't deleted by cdk destroy
+
+If you run `cdk destroy --all`, some information won't be deleted.
+Read more about it in this issue: https://github.com/aws/aws-cdk/issues/7194
 ## Miscellaneous
 
 If you don't want to install AWS CDK globally, you can using it with "npx" like so
@@ -92,3 +126,16 @@ npx aws-cdk <subcommand>
 In order to create this project, AWS CDK version 2.1.0 has been used.
 
 If you deploy this, you'll see an AWS Cloudformation Stack called CDKToolkit listed. Don't worry about it, CDK created that for its purpose.
+
+### Useful commands of CDK
+
+* `cdk ls`          list all stacks in the app
+* `cdk synth`       emits the synthesized CloudFormation template
+* `cdk deploy`      deploy this stack to your default AWS account/region
+* `cdk diff`        compare deployed stack with current state
+* `cdk docs`        open CDK documentation
+
+### Tests
+
+The `tests` directory has been created automatically when I used a AWS CDK template.
+I don't know, for now, how that it's supposed to works. Feel free to explain it to me if you know.
