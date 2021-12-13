@@ -1,4 +1,4 @@
-# Welcome to CDK-Prototype-Infrastructure
+# CDK-Prototype Infrastructure
 
 Treat this folder as a sub project itself. This is the project that can deploy the other projects in the repository in an automated way using AWS CDK.
 ## Getting started
@@ -21,7 +21,7 @@ sudo npm install -g aws-cdk
 
 ### Configuration
 
-You need to install AWS CLI. Then, use this command to set up the credentials of you AWS account.
+You need to install AWS CLI. Then, use this command to set up the credentials of your AWS account.
 ```bash
 aws configure
 ```
@@ -103,7 +103,7 @@ Follow the next steps:
 8. Find some "namespaces" list.
 9. Paste the copied namespaces that you copied in the step 5.
 10. Save it.
-11. Wait until the command `cdk deploy` finishes.
+11. Wait until the command `cdk deploy` finishes, this takes like 15 minutes.
 
 ### Can't delete the stack with cdk destroy
 
@@ -124,7 +124,7 @@ Read more about it in this issue: https://github.com/aws/aws-cdk/issues/7194
 * `cdk deploy`      deploy this stack to your default AWS account/region
 ## Miscellaneous
 
-If you don't want to install AWS CDK globally, you can using it with "npx" like so
+If you don't want to install AWS CDK globally, you still can using it with "npx" like so
 ```bash
 npx aws-cdk <subcommand>
 ```
@@ -134,6 +134,3 @@ In order to create this project, AWS CDK version 2.1.0 has been used.
 If you deploy this, you'll see an AWS Cloudformation Stack called CDKToolkit listed. Don't worry about it, CDK created that for its purpose.
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
-
-The `tests` directory has been created automatically when I used a AWS CDK template.
-I don't know, for now, how that it's supposed to works. Feel free to explain it to me if you know.

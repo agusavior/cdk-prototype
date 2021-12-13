@@ -45,7 +45,7 @@ if USE_CUSTOM_DOMAIN:
             DOMAIN_OF_HOSTED_ZONE = 'example.com'
 
             # Domain (with a subdomain if you want).
-            DOMAIN_NAME = 'lb.agusavior.tk'
+            DOMAIN_NAME = 'sub.example.tk'
     
     # Put this in True if you want to use HTTPS with your custom domain
     USE_HTTPS = True

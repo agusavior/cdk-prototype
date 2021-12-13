@@ -12,7 +12,6 @@ def run(command, cwd=None):
 logging.info('Building...')
 
 # Build Elastic Beanstalk Application
-
 run('zip --version')
 run('mkdir build')
 
