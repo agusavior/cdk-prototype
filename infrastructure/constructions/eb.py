@@ -117,6 +117,8 @@ class ElasticBeanstalkConstruct(Construct):
         )
 
         # EB Enviroment
+        # This enviroment will lanch another Cloudformation template in order to deploy its own Stack.
+        # So, each enviroment of this has associeated a entire CFN Stack. 
         environment_name = f'{construct_label}Enviroment'
         applicatoin_id = f'{construct_label}EnviromentId'
         enviroment = elasticbeanstalk.CfnEnvironment(self, applicatoin_id, 
@@ -146,7 +148,7 @@ class ElasticBeanstalkConstruct(Construct):
 
         CfnOutput(self, 'elb_zip_archive.s3_bucket_name', value=elb_zip_archive.s3_bucket_name)
         CfnOutput(self, 'enviroment.attr_endpoint_url', value=enviroment.attr_endpoint_url)
-
+        
     # About options: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-beanstalk-option-settings.html
     # And: https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/command-options.html
     def get_option_setting_properties(self) -> List[OptionSettingProperty]:
