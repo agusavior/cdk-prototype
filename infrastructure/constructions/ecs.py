@@ -24,6 +24,9 @@ class ECSConstruct(Construct):
         ) -> None:
         super().__init__(scope, f'{construct_label}Construct')
 
+        if spot:
+            raise NotImplementedError('EC2 spot not implemented yet.')
+
         vpc = ec2.Vpc(self, f'{construct_label}Vpc', max_azs=max_azs)     
 
         cluster = ecs.Cluster(self, '{construct_label}Cluster', vpc=vpc)
