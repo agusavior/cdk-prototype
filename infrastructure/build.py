@@ -21,5 +21,5 @@ run('zip -r app.zip .', cwd='./../eb-application')
 # the version of the app. Read more about it on: https://stackoverflow.com/questions/51155927/during-an-aborted-deployment-some-instances-may-have-deployed-the-new-applicati/51833138
 run('mv ./../eb-application/app.zip ./build/')
 
-logging.info('Done.\n Now you can run `cdk deploy` if you want.')
+logging.info('Done.\n Now you may run `cdk deploy`.')
 sys.exit(0)
