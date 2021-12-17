@@ -122,6 +122,7 @@ Read more about it in this issue: https://github.com/aws/aws-cdk/issues/7194
 * `cdk diff`        compare deployed stack with current state
 * `python3 build.py`build some stuff in order to deploy
 * `cdk deploy`      deploy this stack to your default AWS account/region
+
 ## Miscellaneous
 
 If you don't want to install AWS CDK globally, you still can using it with "npx" like so
@@ -134,3 +135,9 @@ In order to create this project, AWS CDK version 2.1.0 has been used.
 If you deploy this, you'll see an AWS Cloudformation Stack called CDKToolkit listed. Don't worry about it, CDK created that for its purpose.
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
+
+## Constructions
+
+TODO: Explain the constructs the infrastructure has.
+
+![ecs vs fargate](https://cloudonaut.io/images/2019/02/ecs-container-instance-fargate@545w2x.webp)
