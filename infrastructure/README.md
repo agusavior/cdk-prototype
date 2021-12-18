@@ -1,6 +1,7 @@
 # CDK-Prototype Infrastructure
 
 Treat this folder as a sub project itself. This is the project that can deploy the other projects in the repository in an automated way using AWS CDK.
+
 ## Getting started
 
 Treat this folder as a sub project itself, so, open it.
@@ -24,6 +25,11 @@ sudo npm install -g aws-cdk
 You need to install AWS CLI. Then, use this command to set up the credentials of your AWS account.
 ```bash
 aws configure
+```
+
+You also can configure your aws credentials editing this file:
+```
+nano ~/.aws/credentials
 ```
 
 ### Local dependencies
@@ -114,6 +120,15 @@ This seems to be an issue: https://github.com/aws/aws-cdk/issues/4155
 
 If you run `cdk destroy --all`, some information won't be deleted.
 Read more about it in this issue: https://github.com/aws/aws-cdk/issues/7194
+
+### State cannot be updated
+
+If you ran `cdk deploy`, and some stack can't be updated, you may move the state of your stack by using AWS CLI.
+Here, some useful commmands:
+
+* `aws cloudformation delete-stack --stack <stackname>` delete a stack
+* `aws cloudformation cancel-update-stack --stack <stackname>` cancel a stack update
+* `aws cloudformation list-stacks` list real remote stacks of the account
 
 ## Important commands
 
