@@ -1,8 +1,12 @@
+import logging
 from time import sleep
+from typing import Callable, Optional, Tuple
 import urllib.parse
 
 import pika
 import pika.exceptions
+
+import hb_connection
 
 from util.log import setup_logging
 from util.config import get_config
@@ -10,7 +14,17 @@ from util import constants as c
 import threading
 import json
 
-def new_pika_blocking_connection():
+from util.agusavior import send_telegram_message
+from util.fakeprocess import fake_process
+
+QUEUE_NAME = get_config(c.RECV_Q)
+EXCHANGE = 'processing_responses'
+ROUTING_KEY = c.SEND_Q.rsplit('.', 1)[0] + '.#'
+
+if not QUEUE_NAME:
+    raise Exception('You must define a queue for amqp')
+
+def new_pika_heartbeating_blocking_connection() -> hb_connection.HeartbeatingBlockingConnection:
     url_str = get_config(c.AMQP_URL)
     url = urllib.parse.urlparse(url_str)
     params = pika.ConnectionParameters(
@@ -19,141 +33,71 @@ def new_pika_blocking_connection():
         heartbeat=300,
         credentials=pika.PlainCredentials(url.username, url.password)
     )
-    return pika.BlockingConnection(params)
+    return hb_connection.HeartbeatingBlockingConnection(params)
 
-'''
-We've had this problem:
-https://stackoverflow.com/questions/14572020/handling-long-running-tasks-in-pika-rabbitmq
-There were many proposal solutions.
-One of them is turning off heartbeating. But, for some reason, this is not advisable.
-Another solution is using this code:
-https://github.com/pika/pika/blob/0.12.0/examples/basic_consumer_threaded.py
-But, this code allows to consume messages in parallel, and this is a problem. We want to
-consume and process one message at once (per program).
-So, this class allows you to:
-1. Keeping the hartbeating.
-2. Process one message at once.
-Every time that the amqp consumer loop, receive a message, it will create a thread
-to process that message, UNLESS there is already a thread processing a message.
-'''
-class LongTasksNotParallelAMQPConnection:
-    QUEUE = get_config(c.RECV_Q)
+# Decorator
+def hbc_handler(function: Callable[[dict], Optional[dict]]):
+    def on_message_callback(channel: hb_connection.HBCChannel, method_frame, _headers, body):
+        log = setup_logging(on_message_callback.__name__)
 
-    def __init__(self, process_function):
-        # Logger.
-        self.log = setup_logging(LongTasksNotParallelAMQPConnection.__name__)
-        self.process_function = process_function
-        self.lock = threading.Lock()
-        self.last_process_message_thread = None
-        self.connection = new_pika_blocking_connection()
-        self.channel = self.connection.channel()
-
-        # Create queue (if not exists)
-        self.channel.queue_declare(self.QUEUE)
-
-        # Set up consume
-        self.channel.basic_consume(
-            queue=self.QUEUE,
-            on_message_callback=lambda ch, mf, hf, b: self._on_message(ch, mf, hf, b),
-            auto_ack=False
-        )
-
-    def _on_message(self, _channel, method_frame, _header_frame, body):
         delivery_tag = method_frame.delivery_tag
 
-        self.log.debug(f'AMQP message received. Delivery tag: {delivery_tag}')
-
-        has_been_locked = self.lock.acquire(blocking=False)
-
-        if has_been_locked:
-            message_body = body.strip().decode()
-
-            # Launch a thread to process it.
-            # When this thread finish, it will release the lock.
-            process_message_thread = ProcessMessageThread(
-                self.channel,
-                self.process_function,
-                message_body,
-                delivery_tag,
-                self.lock,
-            )
-            process_message_thread.start()
-
-            # Save it.
-            self.last_process_message_thread = process_message_thread
-        else:
-            # Reject the message so another consumer can consume it.
-            self.channel.basic_reject(delivery_tag)
-
-            self.log.debug('An AMQP message has been rejected.')
-
-            # Wait a few seconds to prevent consuming the same (or other) message right now.
-            # Probably this code is unnecessary.
-            sleep(2)
-    
-    def consuming_loop(self):
-        self.log.info('Consuming loop. Press Ctrl+C to stop it.')
-        try:
-            self.channel.start_consuming()
-        except KeyboardInterrupt:
-            self.log.info('KeyboardInterrupt detected. Exiting...')
+        if not body:
+            log.warn(f'Received empty message body. (delivery_tag={delivery_tag})')
+            return
         
-        if self.last_process_message_thread:
-            self.log.info('Wait until "process_message_thread" finish.')
-            self.last_process_message_thread.join()
+        try:
+            body_str: str = body.strip().decode()
+            body_dict = json.loads(body_str) # From JSON to dict
+        except json.decoder.JSONDecodeError as e:
+            log.error(f'Invalid JSON format. Please send a message in JSON format. Reason: {e}')
+            return
+        
+        # Log info
+        log.info(f'Message received (delivery_tag={delivery_tag}):\n{body_dict}')
 
-        self.log.info('Stopping AMQP connection...')
-        self.channel.stop_consuming()
-        self.connection.close()
-
-
-class ProcessMessageThread(threading.Thread):
-    EXCHANGE = 'processing_responses'
-    ROUTING_KEY = c.SEND_Q.rsplit('.', 1)[0] + '.#'
-
-    def __init__(self, channel, process_function, message_body, message_delivery_tag, lock_to_release):
-        super().__init__()
-        self.channel = channel
-        self.lock_to_release = lock_to_release
-        self.message_body = message_body
-        self.message_delivery_tag = message_delivery_tag
-        self.process_function = process_function
-
-    def run(self):
         # Process
-        should_respond, response = self.process_function(self.message_body)
+        response = function(body_dict)
 
         # Response
-        if should_respond:
+        if response is not None:
             json_response = json.dumps(response)
-            self.channel.basic_publish(
-                self.EXCHANGE, 
-                self.ROUTING_KEY,
+            channel.basic_publish(
+                EXCHANGE, 
+                ROUTING_KEY,
                 json_response
             )
-
+        
         # Acknowledge
-        self.channel.basic_ack(self.message_delivery_tag)
-
-        # Release lock
-        self.lock_to_release.release()
+        channel.basic_ack(delivery_tag)
+    return on_message_callback
 
 # This function is similar to this one:
 # https://pika.readthedocs.io/en/stable/examples/blocking_consume_recover_multiple_hosts.html
-def connection_loop_with_reconnection(process_function):
+def connection_loop_with_reconnection(on_message_callback):
     log = setup_logging(connection_loop_with_reconnection.__name__)
 
     while True:
         try:
-            log.info('Setting up new AMQP connection.')
-
             # Create and set up connection
-            connection = LongTasksNotParallelAMQPConnection(process_function)
+            log.info('Setting up new AMQP connection.')
+            connection = new_pika_heartbeating_blocking_connection()
+
+            # Create channel and queue
+            hbc_channel = connection.create_hbc_channel(QUEUE_NAME, on_message_callback)
 
             # Consuming loop
-            connection.consuming_loop()
-
-            log.info('Consuming loop is over. Stopping...')
+            log.info('Consuming loop. Press Ctrl+C to stop it.')
+            try:
+                hbc_channel.start_consuming()
+            except KeyboardInterrupt:
+                log.info('KeyboardInterrupt detected.')
+            finally:
+                log.info('Stopping AMQP connection...')
+                hbc_channel.stop_consuming()
+                connection.close()
+            
+            log.info('Consuming loop is over and connection closed.')
             break
         except pika.exceptions.ConnectionClosedByBroker:
             # Uncomment this to make the example not attempt recovery

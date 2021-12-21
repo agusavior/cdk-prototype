@@ -1,35 +1,28 @@
 #!/usr/bin/env python3
+import logging
 import sys
 import json
 import signal
-from typing import Tuple
+from typing import KeysView, Optional, Tuple
+from util.fakeprocess import fake_process
 
 from util.log import setup_logging
 from util.config import all_configs_exist
 from util.agusavior import send_telegram_message
-from util.fakeprocess import fake_process
-from messenger import connection_loop_with_reconnection
 
-def execute_processor(work_data) -> Tuple[bool, dict]:
-    data = work_data.strip()
+from messenger import connection_loop_with_reconnection, hbc_handler
 
-    if not data:
-        # self.log.warn('Received empty message body.')
-        return False, dict()
+# Return the response. If you don't want to respond anything, send None.
+
+@hbc_handler
+def process_a_message(data: dict) -> Optional[dict]:
+    send_telegram_message(f'Processing a video...{data}')
     
-    data = json.loads(data)
-    send_telegram_message('Empieza un proceso')
+    fake_process(8)
+
+    send_telegram_message('Video processed.')
     
-    fake_process(120)
-
-    send_telegram_message('Termina un proceso')
-
-    return False, dict()
-
-    # processor = processors.JobProcessor.create(data['action'])
-    # result, response = processor.process(data)
-    #
-    # return result, response
+    return None
 
 class Server:
     def __init__(self):
@@ -43,7 +36,7 @@ class Server:
         self.log.info("STARTING PROCESSING WORKER")
         try:
             self.log.info("Starting AMQP consume loop")
-            connection_loop_with_reconnection(execute_processor)
+            connection_loop_with_reconnection(process_a_message)
         except Exception as e:
             self.log.exception(f'Server run exception: {e}')
         self.log.info("EXITING PROCESSING SERVER")

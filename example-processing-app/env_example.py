@@ -21,7 +21,7 @@ mq_send_q = 'processing.done.1'
 stitch_bin = 'STITCH_BIN'
 
 # File path to the executable produced by the video-processing code
-serhii_stitch_bin = '/home/aeder/Descargas/Football_stitching-source-code/build/football_stitcher'
+serhii_stitch_bin = '/home/agusavior/build/football_stitcher'
 
 reverse_stitch = True
 
