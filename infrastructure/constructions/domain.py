@@ -56,3 +56,7 @@ class DomainConstruct(Construct):
         # Store some properties in the instance
         self.hosted_zone = hosted_zone
         self.certificate_of = certificate_of
+
+class IDomainAttachable:
+    def attach_to_domain(self, domain: DomainConstruct):
+        raise NotImplementedError()

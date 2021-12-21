@@ -19,55 +19,11 @@ import os
 # I don't know what is this and if you can put any string in here.
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-beanstalk-environment.html#cfn-beanstalk-environment-solutionstackname
 # https://docs.aws.amazon.com/elasticbeanstalk/latest/platforms/platforms-supported.html
-SOLUTION_STACK_NAME = '64bit Amazon Linux 2 v3.4.9 running Docker'
+DOCKER_SOLUTION_STACK_NAME = '64bit Amazon Linux 2 v3.4.9 running Docker'
 RUBY_SOLUTION_STACK_NAME = '64bit Amazon Linux 2 v3.4.0 running Ruby 2.6'
 
 # Shortcut
 OptionSettingProperty = elasticbeanstalk.CfnEnvironment.OptionSettingProperty
-
-# Source:
-# https://stackoverflow.com/questions/56164141/aws-cdk-how-to-target-an-elastic-beanstalk-environment-with-a-route53-alias-rec 
-# https://docs.aws.amazon.com/general/latest/gr/elb.html
-ELB_ZONE_IDS = {
-    'us-east-2': 'Z3AADJGX6KTTL2',
-    'us-east-1': 'Z368ELLRRE2KJ0',
-    'us-west-1': 'Z368ELLRRE2KJ0',
-    'us-west-2': 'Z1H1FL5HABSF5',
-    'af-south-1': 'Z268VQBMOI5EKX',
-    'ap-east-1': 'Z3DQVH9N71FHZ0',
-    'ap-south-1': 'ZP97RAFLXTNZK',
-    'ap-northeast-3': 'Z5LXEXXYW11ES',
-    'ap-northeast-2': 'ZWKZPGTI48KDX',
-    'ap-southeast-1': 'Z1LMS91P8CMLE5',
-    'ap-southeast-2': 'Z1GM3OXH4ZPM65',
-    'ap-northeast-1': 'Z14GRHDCWA56QT',
-    'ca-central-1': 'ZQSVJUPU6J1EY',
-    'cn-north-1': 'Z1GDH35T77C1KE',
-    'cn-northwest-1': 'ZM7IZAIOVVDZF',
-    'eu-central-1': 'Z215JYRZR1TBD5',
-    'eu-west-1': 'Z32O12XQLNTSW2',
-    'eu-west-2': 'ZHURV8PSTC4K8',
-    'eu-south-1': 'Z3ULH7SSC9OV64',
-    'eu-west-3': 'Z3Q77PNBQS71R4',
-    'eu-north-1': 'Z23TAZ6LKFMNIO',
-    'me-south-1': 'ZS929ML54UICD',
-    'sa-east-1': 'Z2P70J7HTTTPLU',
-    'us-gov-east-1': 'Z166TLBEWOO7G0',
-    'us-gov-west-1': 'Z33AYJ8TM3BH4J',
-}
-
-# Helper to generate a instance of type IAliasRecordTarget
-def generate_elb_alias_record_target(dns_name: str, region: str) -> route53.IAliasRecordTarget:
-    import jsii
-    #@jsii.implements(route53.IAliasRecordTarget)
-    class ELBAliasRecordTarget(route53.IAliasRecordTarget):
-        def bind(self, record: route53.IRecordSet, zone: Optional[route53.IHostedZone] = None) -> route53.AliasRecordTargetConfig:
-            return route53.AliasRecordTargetConfig(
-                dns_name=dns_name,
-                hosted_zone_id=ELB_ZONE_IDS[region],
-            )
-    return ELBAliasRecordTarget
-
 
 # This construct creates another Stack, like a companion Stack
 class ElasticBeanstalkConstruct(Construct):
@@ -88,10 +44,10 @@ class ElasticBeanstalkConstruct(Construct):
             self,
             scope: Construct,
             id: str,
-            elb_zip_path: str,
+            elb_zip_path: str,                                # Create a zip with all the project content before deploy this
             instance_type_id: Optional[str],                  # Exampe: 't2.medium'
             domain_configuration: Optional[DomainConfiguration] = None,
-            solution_stack_name = SOLUTION_STACK_NAME,
+            solution_stack_name = DOCKER_SOLUTION_STACK_NAME,
         ) -> None:
         super().__init__(scope, id)
 
@@ -137,19 +93,6 @@ class ElasticBeanstalkConstruct(Construct):
         # Also important - make sure that `app` exists before creating an app version
         app_version_props.add_depends_on(application)
 
-        # Domain attachment
-        # TODO: Remove the 'False' once this issue finished: https://github.com/aws/aws-cdk/issues/17992
-        if False and domain_configuration:
-            # Attach Domain to DNS Domain of the Load Balancer of the Enviroment
-            a_record = route53.ARecord(self, f'{construct_label}AliasRecord',
-                target=route53.RecordTarget.from_alias(
-                    targets.ElasticBeanstalkEnvironmentEndpointTarget(
-                        enviroment.attr_endpoint_url,
-                    ),
-                ),
-                zone=domain_configuration.hosted_zone,
-            )
-
         CfnOutput(self, 's3_bucket_name', value=elb_zip_archive.s3_bucket_name)
         CfnOutput(self, 'attr_endpoint_url', value=enviroment.attr_endpoint_url)
         
@@ -178,25 +121,6 @@ class ElasticBeanstalkConstruct(Construct):
                     value=self.instance_type_id,
                 ),
             )
-
-        # If there is domain_configuration, set up HTTPS
-        domain_configuration = self.domain_configuration
-        if domain_configuration and domain_configuration.arn_certificate:
-            arn_certificate = domain_configuration.arn_certificate
-
-            # Let's set up HTTPs
-            options.append(OptionSettingProperty(
-                namespace='aws:elb:listener:listener_port',
-                option_name='ListenerProtocol',
-                value='HTTPS',
-            ))
-
-            # Certificate
-            options.append(OptionSettingProperty(
-                namespace='aws:elb:listener:listener_port',
-                option_name='SSLCertificateId',
-                value=arn_certificate,
-            ))
 
         return options
     

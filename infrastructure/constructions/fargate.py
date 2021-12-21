@@ -105,4 +105,3 @@ class Stack1(Stack):
             public_load_balancer=True)  # Default is False
         
         CfnOutput(scope=self, id="certificate.certificate_arn", value=certificate.certificate_arn)
-    

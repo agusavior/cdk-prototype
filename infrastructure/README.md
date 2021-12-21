@@ -130,6 +130,10 @@ Here, some useful commmands:
 * `aws cloudformation cancel-update-stack --stack <stackname>` cancel a stack update
 * `aws cloudformation list-stacks` list real remote stacks of the account
 
+### error UtilConnectToInteropServer
+
+I got this error using the terminal of Visual Studio. Try using another terminal.
+
 ## Important commands
 
 * `aws configure`   global configuration about your aws account and region

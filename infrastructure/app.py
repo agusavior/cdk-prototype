@@ -2,14 +2,28 @@
 import os
 
 import aws_cdk as cdk
+import logging
 from aws_cdk import Stack
+from aws_cdk import (
+    aws_ecr_assets as ecr_assets,
+    aws_ecs as ecs,
+    aws_ecr as ecr,
+)
+from aws_cdk.aws_ec2 import Vpc
 
 from constructions.fargate import Stack1
-from constructions.eb import ElasticBeanstalkConstruct
+from constructions.eb import ElasticBeanstalkConstruct, RUBY_SOLUTION_STACK_NAME
 from constructions.domain import DomainConstruct
+from constructions.ecs import EC2ProcessingConstruct
+
+from stacks.domain import DomainStack
+from stacks.ecs import ProcessingEC2ServiceStack
+from stacks.vpc import VpcStack
 
 CDK_DEFAULT_ACCOUNT = os.environ.get("CDK_DEFAULT_ACCOUNT")
 CDK_DEFAULT_REGION = os.environ.get("CDK_DEFAULT_REGION")
+
+IMAGE_NAME = 'docker.io/nginx:latest'
 
 if not CDK_DEFAULT_REGION:
     raise AssertionError('CDK_DEFAULT_REGION must be defined.')
@@ -20,51 +34,59 @@ if not CDK_DEFAULT_REGION:
 def define_stacks(app: cdk.App):
     # ============
     # DomainsStack
-    # Each time this comes up, it costs like 0.5 USD. So, take care.
-    # This is because when you turn on a new HostedZone, it costs 0.5 USD.
-    # You can select which Stacks you want to deploy or destroy being specific in your commands,
-    # for instance, you can do: `cdk destroy Stack1`.
     # ============
-    domains_stack = Stack(app, 'DomainsStack',
-        description='The Stack that contains Hosted Zones, certificates, and so.'
+    domains_stack = DomainStack(
+        app,
+        domain_of_hosted_zone='fanaty.com',
+        sub_domain_list=[],
+        existing_hosted_zone_id='Z1FHNQ1X01VLGA',
     )
 
-    # Attach a DomainConstruct in the Stack
-    domain = DomainConstruct(
-        domains_stack,
-        domain_of_hosted_zone='agusavior.tk',
-        sub_domain_list=['eb.agusavior.tk'],
+    # ==========================================
+    # ElasticBeanstalkStack Example Flask Server
+    # Remember to run `python3 build.py` before deploy this stack.
+    # ==========================================
+    eb_flask_stack = Stack(app,
+        id='eb-docker-flask',
+        description='Elastic Beanstalk Stack for Example Flask Server'
+    )
+    ElasticBeanstalkConstruct(eb_flask_stack,
+        id='example-flask-app',
+        elb_zip_path='./build/example-flask-app.zip',
+        instance_type_id='t3.small',
     )
 
-    stack1 = Stack(app, id='Stack1',
-        # If you don't specify 'env', this stack will be environment-agnostic.
-        # Account/Region-dependent features and context lookups will not work,
-        # but a single synthesized template can be deployed anywhere.
+    # =========
+    # VPC Stack
+    # =========
+    vpc_stack = VpcStack(app, max_azs=3)
 
-        # Uncomment the next line to specialize this stack for the AWS Account
-        # and Region that are implied by the current CLI configuration.
-
-        #env=cdk.Environment(account=os.getenv('CDK_DEFAULT_ACCOUNT'), region=os.getenv('CDK_DEFAULT_REGION')),
-
-        # Uncomment the next line if you know exactly what Account and Region you
-        # want to deploy the stack to. */
-
-        #env=cdk.Environment(account='123456789012', region='us-east-1'),
-
-        # For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html
+    # ==================
+    # ECS for Processing
+    # ==================
+    image = ecs.ContainerImage.from_asset('../example-processing-app')
+    # image = ecs.ContainerImage.from_registry('agusavior/ecs-processing-app:tagname')
+    ecs_processing_stack = ProcessingEC2ServiceStack(
+        app,
+        id='ecs-processing-stack',
+        instance_type_id='t2.medium',
+        image=image,
+        vpc=vpc_stack.vpc,
     )
-
-    # =====================
-    # ElasticBeanstalkStack
-    # =====================
-    eb_stack = Stack(app, id='Stack2', description='Elastic Beanstalk Stack')
-    ElasticBeanstalkConstruct(eb_stack,
-        elb_zip_path='./build/app.zip',
-        domain_configuration=ElasticBeanstalkConstruct.DomainConfiguration(
-            region=CDK_DEFAULT_REGION,
-            domain_name='eb.agusavior.tk',
-            hosted_zone=domain.hosted_zone,
-        )
+    
+    # =========================
+    # ElasticBeanstalkStack API
+    # =========================
+    eb_api_stack = Stack(app,
+        id='stack4',
+        description='Elastic Beanstalk Stack Ruby API'
+    )
+    ElasticBeanstalkConstruct(eb_api_stack,
+        id='ruby-api',
+        # elb_zip_path='../api/app.zip',
+        elb_zip_path='./build/app-9c2e-210828_220249-downloaded.zip',
+        solution_stack_name = RUBY_SOLUTION_STACK_NAME,
+        instance_type_id='t2.medium',
     )
 
 # =======

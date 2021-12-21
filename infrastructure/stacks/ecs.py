@@ -1,21 +1,13 @@
 from typing import Optional
 from aws_cdk import (
-    Duration,
     Stack,
-    aws_sqs as sqs,
     aws_ecs as ecs,
     aws_ec2 as ec2,
-    aws_ecr as ecr,
-    aws_route53 as route53,
     aws_ecs_patterns as ecs_patterns,
-    aws_certificatemanager as certificatemanager,
-    aws_elasticbeanstalk as elasticbeanstalk,
-    CfnOutput,
 )
-from aws_cdk.aws_ecr import Repository
 from constructs import Construct
 
-class EC2ProcessingConstruct(Construct):
+class ProcessingEC2ServiceStack(Stack):
     def __init__(
             self,
             scope: Construct,
@@ -23,13 +15,15 @@ class EC2ProcessingConstruct(Construct):
             instance_type_id: str,                  # instance type
             image: ecs.ContainerImage,              # container image
             spot_price: Optional[str] = None,       # max spot price per hour. Example: '0.064'. If it is None, no spot instances are going to be used.
-            max_azs: int = 3,                       # default is all AZs in region
             memory_mib=1024,                        # memory limit
             max_scaling_capacity=5,                 # maxim
+            vpc: Optional[ec2.Vpc] = None,          # optional vpc. If None, creates one.
         ) -> None:
-        super().__init__(scope, id)
-
-        vpc = ec2.Vpc(self, f'{id}-vpc', max_azs=max_azs)     
+        super().__init__(
+            scope=scope,
+            id=id,
+            description='ECS EC2 cluster with one service with autoscaling and a SQS.'
+        )
 
         cluster = ecs.Cluster(self, f'{id}-cluster', vpc=vpc)
 
