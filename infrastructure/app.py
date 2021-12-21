@@ -68,7 +68,7 @@ def define_stacks(app: cdk.App):
     # image = ecs.ContainerImage.from_registry('agusavior/ecs-processing-app:tagname')
     ecs_processing_stack = ProcessingEC2ServiceStack(
         app,
-        id='ecs-processing-stack',
+        id='ecs-processing',
         instance_type_id='t2.medium',
         image=image,
         vpc=vpc_stack.vpc,
