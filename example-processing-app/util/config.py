@@ -1,7 +1,7 @@
 import os
 import sys
 
-from . import constants as c
+import constants as c
 import env
 
 OUTPUT_PATH = f"{os.getenv('HOME', '.')}/worker_media"

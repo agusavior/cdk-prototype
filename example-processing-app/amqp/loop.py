@@ -1,29 +1,23 @@
-import logging
-from time import sleep
-from typing import Callable, Optional, Tuple
 import urllib.parse
 
 import pika
 import pika.exceptions
 
-import hb_connection
+import amqp.hb_connection as hb_connection
 
 from util.log import setup_logging
 from util.config import get_config
-from util import constants as c
-import threading
-import json
+import constants as c
 
 from util.agusavior import send_telegram_message
 from util.fakeprocess import fake_process
 
 QUEUE_NAME = get_config(c.RECV_Q)
-EXCHANGE = 'processing_responses'
-ROUTING_KEY = c.SEND_Q.rsplit('.', 1)[0] + '.#'
 
 if not QUEUE_NAME:
     raise Exception('You must define a queue for amqp')
 
+# Creates a HeartbeatingBlockingConnection based on constants and configuration
 def new_pika_heartbeating_blocking_connection() -> hb_connection.HeartbeatingBlockingConnection:
     url_str = get_config(c.AMQP_URL)
     url = urllib.parse.urlparse(url_str)
@@ -35,45 +29,9 @@ def new_pika_heartbeating_blocking_connection() -> hb_connection.HeartbeatingBlo
     )
     return hb_connection.HeartbeatingBlockingConnection(params)
 
-# Decorator
-def hbc_handler(function: Callable[[dict], Optional[dict]]):
-    def on_message_callback(channel: hb_connection.HBCChannel, method_frame, _headers, body):
-        log = setup_logging(on_message_callback.__name__)
-
-        delivery_tag = method_frame.delivery_tag
-
-        if not body:
-            log.warn(f'Received empty message body. (delivery_tag={delivery_tag})')
-            return
-        
-        try:
-            body_str: str = body.strip().decode()
-            body_dict = json.loads(body_str) # From JSON to dict
-        except json.decoder.JSONDecodeError as e:
-            log.error(f'Invalid JSON format. Please send a message in JSON format. Reason: {e}')
-            return
-        
-        # Log info
-        log.info(f'Message received (delivery_tag={delivery_tag}):\n{body_dict}')
-
-        # Process
-        response = function(body_dict)
-
-        # Response
-        if response is not None:
-            json_response = json.dumps(response)
-            channel.basic_publish(
-                EXCHANGE, 
-                ROUTING_KEY,
-                json_response
-            )
-        
-        # Acknowledge
-        channel.basic_ack(delivery_tag)
-    return on_message_callback
-
 # This function is similar to this one:
 # https://pika.readthedocs.io/en/stable/examples/blocking_consume_recover_multiple_hosts.html
+# But it uses a custom connection instance and a custom channel instance
 def connection_loop_with_reconnection(on_message_callback):
     log = setup_logging(connection_loop_with_reconnection.__name__)
 

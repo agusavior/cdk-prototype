@@ -1,5 +1,4 @@
-from . import constants as c
-
+import constants as c
 
 # Responses
 
