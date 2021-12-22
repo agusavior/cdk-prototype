@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 import env
-
+import uuid
 import json
 
 # If the variable `enviroment_variable_name` is defined as an enviroment variable or if it is defined
@@ -18,3 +18,7 @@ def from_json_file(file_path: str) -> dict:
     data: dict = json.load(f)
     f.close()
     return data
+
+# Generate a random string
+def from_uuid():
+    return uuid.uuid4().hex[:6].upper()

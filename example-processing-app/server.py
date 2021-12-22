@@ -51,7 +51,7 @@ def main():
         send_telegram_message(f'AWS Metadata: {constants.ECS_METADATA_DICT}')
 
     # Start the server
-    send_telegram_message(f'Starting a Server! {constants.ECS_ENABLE_CONTAINER_METADATA} {constants.ECS_CONTAINER_METADATA_FILE}')
+    send_telegram_message(f'Process started. PROCESS_UUID: {constants.PROCESS_UUID}')
     log.info("STARTING PROCESSING WORKER")
     try:
         log.info("Starting AMQP consume loop")
@@ -59,4 +59,4 @@ def main():
     except Exception as e:
         log.exception(f'Server run exception: {e}')
     log.info("EXITING PROCESSING SERVER")
-    send_telegram_message('Closing a Server.')
+    send_telegram_message(f'Process ended. PROCESS_UUID: {constants.PROCESS_UUID}')

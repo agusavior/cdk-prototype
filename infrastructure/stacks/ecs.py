@@ -45,8 +45,10 @@ class ProcessingEC2ServiceStack(Stack):
             # command=["-c", "4", "amazon.com"],  # Default: Uses the CMD of the image.
             enable_logging=True,
             environment={
-                "TEST_ENVIRONMENT_VARIABLE1": "test environment variable 1 value",
-                "TEST_ENVIRONMENT_VARIABLE2": "test environment variable 2 value"
+                # ECS_ENABLE_CONTAINER_METADATA explained here:
+                # https://docs.aws.amazon.com/AmazonECS/latest/developerguide/container-metadata.html
+                # But it doens't work: https://github.com/aws/amazon-ecs-agent/issues/1514
+                'ECS_ENABLE_CONTAINER_METADATA': 'true',
             },
             max_scaling_capacity=max_scaling_capacity,
             container_name=f'{id}-container',
