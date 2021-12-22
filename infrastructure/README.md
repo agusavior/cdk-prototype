@@ -91,7 +91,7 @@ cdk destroy --all
 ```
 
 Some information won't be deleted in this process.
-Read more about it in this issue: https://github.com/aws/aws-cdk/issues/7194
+Read more about it in (this issue)[https://github.com/aws/aws-cdk-rfcs/issues/64].
 
 ## Troubleshooting
 
