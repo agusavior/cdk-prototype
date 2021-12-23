@@ -1,8 +1,11 @@
 # ToDo: this module is copied from fanaty-iot, ideally DRY
 import logging
-
-from util.config import OUTPUT_PATH, OUTPUT_TO_STDOUT
 from pathlib import Path
+
+import os
+
+OUTPUT_PATH = f"{os.getenv('HOME', '.')}/worker_media"
+OUTPUT_TO_STDOUT = not os.getenv('SUPERVISOR_ENABLED')
 
 def create_dirs(dirs):
     for d in dirs:
