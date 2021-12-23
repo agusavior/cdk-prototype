@@ -4,7 +4,6 @@ from typing import Callable, Optional
 import amqp.hb_connection as hb_connection
 
 from util.log import setup_logging
-from util.config import get_config
 import constants as c
 import json
 
@@ -36,8 +35,8 @@ def callback_simplifier(function: Callable[[dict], Optional[dict]]):
         if response is not None:
             json_response = json.dumps(response)
             channel.basic_publish(
-                c.EXCHANGE, 
-                c.ROUTING_KEY,
+                c.AMQP_EXCHANGE, 
+                c.AMQP_ROUTING_KEY,
                 json_response
             )
         

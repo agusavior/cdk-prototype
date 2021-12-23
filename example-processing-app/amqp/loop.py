@@ -6,20 +6,14 @@ import pika.exceptions
 import amqp.hb_connection as hb_connection
 
 from util.log import setup_logging
-from util.config import get_config
 import constants as c
 
 from util.agusavior import send_telegram_message
 from util.fakeprocess import fake_process
 
-QUEUE_NAME = get_config(c.RECV_Q)
-
-if not QUEUE_NAME:
-    raise Exception('You must define a queue for amqp')
-
 # Creates a HeartbeatingBlockingConnection based on constants and configuration
 def new_pika_heartbeating_blocking_connection() -> hb_connection.HeartbeatingBlockingConnection:
-    url_str = get_config(c.AMQP_URL)
+    url_str = c.AMQP_URL
     url = urllib.parse.urlparse(url_str)
     params = pika.ConnectionParameters(
         host=url.hostname,
@@ -42,7 +36,7 @@ def connection_loop_with_reconnection(on_message_callback):
             connection = new_pika_heartbeating_blocking_connection()
 
             # Create channel and queue
-            hbc_channel = connection.create_hbc_channel(QUEUE_NAME, on_message_callback)
+            hbc_channel = connection.create_hbc_channel(c.AMQP_RECV_Q, on_message_callback)
 
             # Consuming loop
             log.info('Consuming loop. Press Ctrl+C to stop it.')

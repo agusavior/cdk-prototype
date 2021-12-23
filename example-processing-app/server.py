@@ -7,7 +7,6 @@ from typing import Optional
 from util.fakeprocess import fake_process
 
 from util.log import setup_logging
-from util.config import all_configs_exist
 from util.agusavior import send_telegram_message
 
 from amqp.loop import connection_loop_with_reconnection
@@ -18,7 +17,7 @@ from amqp.simplifier import callback_simplifier
 def on_message(data: dict) -> Optional[dict]:
     send_telegram_message(f'Processing a video...{data}')
     
-    fake_process(8 * 60)
+    fake_process(6 * 80)
 
     send_telegram_message('Video processed.')
     return None
@@ -33,11 +32,6 @@ def on_sigterm(_, __):
 
 def main():
     log = setup_logging(main.__name__)
-
-    # Assert that every necessary config is setted up
-    if not all_configs_exist():
-        log.critical("Please set up all credentials (var env/env.py)")
-        sys.exit(1)
 
     # Register singal handler so we can caught the AWS intent for closing the app.
     # This intent will be produced if AWS wants to terminate your instance.
