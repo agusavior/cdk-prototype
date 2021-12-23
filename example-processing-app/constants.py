@@ -7,10 +7,9 @@ ECS_METADATA_DICT = from_json_file(ECS_CONTAINER_METADATA_FILE) if ECS_CONTAINER
 
 PROCESS_UUID = from_uuid()
 
-AMQP_URL = 'AMQP_URL'
-AMQP_EXCHANGE = 'AMQP_EXCHANGE'
-RECV_Q = 'RECV_Q'
-SEND_Q = 'SEND_Q'
+AMQP_URL = from_env('AMQP_URL', required=True)
+AMQP_RECV_Q = 'processing.pending.1'
+AMQP_SEND_Q = 'processing.done.1'
 
-EXCHANGE = 'processing_responses'
-ROUTING_KEY = 'processing.#'
+AMQP_EXCHANGE = 'processing'
+AMQP_ROUTING_KEY = 'processing.#'
